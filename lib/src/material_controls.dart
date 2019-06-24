@@ -24,6 +24,7 @@ class _MaterialControlsState extends State<MaterialControls> {
   Timer _showTimer;
   Timer _showAfterExpandCollapseTimer;
   bool _dragging = false;
+  String subtitle = "";
 
   final barHeight = 48.0;
   final marginSize = 5.0;
@@ -33,19 +34,25 @@ class _MaterialControlsState extends State<MaterialControls> {
 
   @override
   Widget build(BuildContext context) {
+    if (chewieController.showSubtitle) {
+      String newSubtitle = controller.value.subtitle;
+      if (subtitle != newSubtitle) {
+        subtitle = newSubtitle;
+      }
+    }
     if (_latestValue.hasError) {
       return chewieController.errorBuilder != null
           ? chewieController.errorBuilder(
-              context,
-              chewieController.videoPlayerController.value.errorDescription,
-            )
+        context,
+        chewieController.videoPlayerController.value.errorDescription,
+      )
           : Center(
-              child: Icon(
-                Icons.error,
-                color: Colors.white,
-                size: 42,
-              ),
-            );
+        child: Icon(
+          Icons.error,
+          color: Colors.white,
+          size: 42,
+        ),
+      );
     }
 
     return GestureDetector(
@@ -55,16 +62,34 @@ class _MaterialControlsState extends State<MaterialControls> {
         child: Column(
           children: <Widget>[
             _latestValue != null &&
-                        !_latestValue.isPlaying &&
-                        _latestValue.duration == null ||
-                    _latestValue.isBuffering
+                !_latestValue.isPlaying &&
+                _latestValue.duration == null ||
+                _latestValue.isBuffering
                 ? const Expanded(
-                    child: const Center(
-                      child: const CircularProgressIndicator(),
-                    ),
-                  )
-                : _buildHitArea(),
-            _buildBottomBar(context),
+              child: const Center(
+                child: const CircularProgressIndicator(),
+              ),
+            ) : _buildHitArea(),
+
+            Stack(
+              alignment: AlignmentDirectional.bottomCenter,
+              children: <Widget>[
+                chewieController.showSubtitle && this.subtitle != "" ? Container(
+                      padding: EdgeInsets.only(bottom: 2.0, left: 2.0, right: 2.0),
+                      margin: EdgeInsets.only(bottom: 12.0),
+                      color: Colors.black.withOpacity(0.7),
+                      child: Text(
+                        this.subtitle,
+                        style: TextStyle(
+                            fontSize: 20,
+                            color: Colors.white,
+                        ),
+                        textAlign: TextAlign.center,
+                      )) : Container(),
+
+                _buildBottomBar(context),
+             ],
+            )
           ],
         ),
       ),
@@ -99,8 +124,8 @@ class _MaterialControlsState extends State<MaterialControls> {
   }
 
   AnimatedOpacity _buildBottomBar(
-    BuildContext context,
-  ) {
+      BuildContext context,
+      ) {
     final iconColor = Theme.of(context).textTheme.button.color;
 
     return AnimatedOpacity(
@@ -119,6 +144,7 @@ class _MaterialControlsState extends State<MaterialControls> {
             chewieController.allowMuting
                 ? _buildMuteButton(controller)
                 : Container(),
+            _buildCCButton(chewieController),
             chewieController.allowFullScreen
                 ? _buildExpandButton()
                 : Container(),
@@ -159,20 +185,20 @@ class _MaterialControlsState extends State<MaterialControls> {
         onTap: _latestValue != null && _latestValue.isPlaying
             ? _cancelAndRestartTimer
             : () {
-                _playPause();
+          _playPause();
 
-                setState(() {
-                  _hideStuff = true;
-                });
-              },
+          setState(() {
+            _hideStuff = true;
+          });
+        },
         child: Container(
           color: Colors.transparent,
           child: Center(
             child: AnimatedOpacity(
               opacity:
-                  _latestValue != null && !_latestValue.isPlaying && !_dragging
-                      ? 1.0
-                      : 0.0,
+              _latestValue != null && !_latestValue.isPlaying && !_dragging
+                  ? 1.0
+                  : 0.0,
               duration: Duration(milliseconds: 300),
               child: GestureDetector(
                 child: Container(
@@ -194,12 +220,11 @@ class _MaterialControlsState extends State<MaterialControls> {
   }
 
   GestureDetector _buildMuteButton(
-    VideoPlayerController controller,
-  ) {
+      VideoPlayerController controller,
+      ) {
     return GestureDetector(
       onTap: () {
         _cancelAndRestartTimer();
-
         if (_latestValue.volume == 0) {
           controller.setVolume(_latestVolume ?? 0.5);
         } else {
@@ -222,6 +247,36 @@ class _MaterialControlsState extends State<MaterialControls> {
                 (_latestValue != null && _latestValue.volume > 0)
                     ? Icons.volume_up
                     : Icons.volume_off,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  GestureDetector _buildCCButton(
+      ChewieController chewieController,
+      ) {
+    return GestureDetector(
+      onTap: () {
+        _cancelAndRestartTimer();
+        chewieController.showSubtitle = !chewieController.showSubtitle;
+      },
+      child: AnimatedOpacity(
+        opacity: _hideStuff ? 0.0 : 1.0,
+        duration: Duration(milliseconds: 300),
+        child: ClipRect(
+          child: Container(
+            child: Container(
+              height: barHeight,
+              padding: EdgeInsets.only(
+                left: 8.0,
+                right: 8.0,
+              ),
+              child: Icon(
+                Icons.closed_caption,
+                color: chewieController.showSubtitle ? Colors.blue : Colors.white,
               ),
             ),
           ),

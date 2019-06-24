@@ -168,6 +168,7 @@ class ChewieState extends State<Chewie> {
 class ChewieController extends ChangeNotifier {
   ChewieController({
     this.videoPlayerController,
+    this.showSubtitle = true,
     this.aspectRatio,
     this.autoInitialize = false,
     this.autoPlay = false,
@@ -200,6 +201,9 @@ class ChewieController extends ChangeNotifier {
 
   /// The controller for the video you want to play
   final VideoPlayerController videoPlayerController;
+
+  /// Show subtitle.
+  bool showSubtitle;
 
   /// Initialize the Video on Startup. This will prep the video for playback.
   final bool autoInitialize;
